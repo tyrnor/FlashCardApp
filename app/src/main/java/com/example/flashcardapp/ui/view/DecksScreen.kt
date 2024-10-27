@@ -15,14 +15,17 @@ import androidx.navigation.NavController
 import com.example.flashcardapp.domain.model.Deck
 import com.example.flashcardapp.presentation.DecksViewModel
 import com.example.flashcardapp.ui.navigation.DeckDestination
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 
 @Composable
 fun DecksScreen(navController: NavController) {
     val decksViewModel: DecksViewModel = hiltViewModel()
     val decksState by decksViewModel.decksState.collectAsState()
+    val uid = Firebase.auth.currentUser!!.uid
 
     LaunchedEffect(Unit) {
-        //decksViewModel.getDecks()
+        decksViewModel.getUserDecks(uid)
     }
 
     decksState?.let { result ->
