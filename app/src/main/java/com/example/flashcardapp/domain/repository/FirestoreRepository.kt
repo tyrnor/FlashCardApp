@@ -5,5 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface FirestoreRepository {
 
-    suspend fun getDecks() : Flow<Result<List<Deck>>>
+    suspend fun getUserDecks(uid: String) : Flow<Result<List<Deck>>>
 }

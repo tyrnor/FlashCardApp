@@ -3,7 +3,7 @@ package com.example.flashcardapp.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flashcardapp.domain.model.Deck
-import com.example.flashcardapp.domain.usecase.GetDecksUseCase
+import com.example.flashcardapp.domain.usecase.firestore.GetDecksUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,9 +17,9 @@ class DecksViewModel @Inject constructor(
     private val _decksState = MutableStateFlow<Result<List<Deck>>?>(null)
     val decksState: StateFlow<Result<List<Deck>>?> = _decksState
 
-    fun getDecks() {
+    fun getUserDecks(uid: String) {
         viewModelScope.launch {
-            getDecksUseCase().collect { result ->
+            getDecksUseCase(uid).collect { result ->
                 _decksState.value = result
             }
         }

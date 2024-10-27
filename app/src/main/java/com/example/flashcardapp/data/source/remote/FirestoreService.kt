@@ -12,9 +12,10 @@ class FirestoreService {
 
     private val firestore = Firebase.firestore
 
-    suspend fun getDecks(): Flow<Result<List<DeckDto>>> = callbackFlow {
+    suspend fun getUserDecks(uid: String): Flow<Result<List<DeckDto>>> = callbackFlow {
         val collectionRef =
-            firestore.collection("Decks").orderBy("timestamp", Query.Direction.DESCENDING)
+            firestore.collection("Users").document(uid).collection("Decks")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
 
         val listenerRegistration = collectionRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
