@@ -1,7 +1,6 @@
 package com.example.flashcardapp.data.repository
 
 import com.example.flashcardapp.data.source.remote.FirestoreService
-import com.example.flashcardapp.domain.Resource
 import com.example.flashcardapp.domain.mapper.DeckMapper
 import com.example.flashcardapp.domain.model.Deck
 import com.example.flashcardapp.domain.repository.FirestoreRepository
@@ -14,19 +13,12 @@ class FirestoreRepositoryImpl @Inject constructor(
     private val deckMapper: DeckMapper
 ) :
     FirestoreRepository {
-    override suspend fun getDecks(): Flow<Resource<List<Deck>>> {
-        return firestoreService.getDecks().map { resource ->
-            when (resource) {
-                is Resource.Loading -> Resource.Loading
-                is Resource.Success -> {
-                    val decks = resource.data.map { deckDto ->
-                        deckMapper.toDomain(deckDto)
-                    }
-                    Resource.Success(decks)
-                }
-                is Resource.Error -> Resource.Error(resource.message)
+    override suspend fun getDecks(): Flow<Result<List<Deck>>> {
+        return firestoreService.getDecks().map { result ->
+            result.mapCatching { deckDtos ->
+                // Transform each DeckDto to a Deck using the mapper
+                deckDtos.map { deckMapper.toDomain(it) }
             }
         }
     }
-
 }
