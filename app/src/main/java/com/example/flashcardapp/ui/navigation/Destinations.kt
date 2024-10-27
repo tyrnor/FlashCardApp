@@ -11,3 +11,7 @@ object DecksDestination : Destinations {
 object DeckDestination : Destinations {
     override val route: String = "deck"
 }
+
+object LoginDestination : Destinations {
+    override val route: String = "login"
+}
