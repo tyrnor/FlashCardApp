@@ -3,6 +3,7 @@ package com.example.flashcardapp.data.source.remote
 import com.example.flashcardapp.data.model.DeckDto
 import com.example.flashcardapp.domain.Resource
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -15,7 +16,8 @@ class FirestoreService {
     suspend fun getDecks(): Flow<Resource<List<DeckDto>>> = callbackFlow {
         trySend(Resource.Loading)
 
-        val collectionRef = firestore.collection("Decks")
+        val collectionRef =
+            firestore.collection("Decks").orderBy("timestamp", Query.Direction.DESCENDING)
 
         val listenerRegistration = collectionRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
