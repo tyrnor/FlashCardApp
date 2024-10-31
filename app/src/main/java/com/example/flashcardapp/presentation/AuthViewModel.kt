@@ -17,6 +17,9 @@ class AuthViewModel @Inject constructor(
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
     val loginState: StateFlow<LoginState> = _loginState
 
+    private val _loginFailed = MutableStateFlow(false)
+    val loginFailed : StateFlow<Boolean> = _loginFailed
+
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _loginState.value = LoginState.Loading
@@ -34,5 +37,12 @@ class AuthViewModel @Inject constructor(
                 _loginState.value = LoginState.Error(e.message ?: "Unknown error")
             }
         }
+    }
+
+    fun loginFailed(){
+        _loginFailed.value = true
+    }
+    fun resetLoginFailed() {
+        _loginFailed.value = false
     }
 }

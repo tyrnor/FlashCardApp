@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -44,11 +45,17 @@ import androidx.navigation.NavController
 
 @Composable
 fun DeckScreen(navController: NavController, windowSize: WindowSizeClass) {
-    AddCreditCard(windowSize)
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        DeckCard(windowSize)
+    }
 }
 
 @Composable
-fun AddCreditCard(windowSize: WindowSizeClass) {
+fun DeckCard(windowSize: WindowSizeClass) {
 
     var rotated by remember { mutableStateOf(false) }
 
@@ -167,7 +174,6 @@ fun AddCreditCard(windowSize: WindowSizeClass) {
                         onClick = {},
                         modifier = Modifier
                             .graphicsLayer {
-                                alpha = animateBack
                                 rotationY = rotation
                             }
                             .clip(RoundedCornerShape(50))
