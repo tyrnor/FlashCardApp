@@ -16,14 +16,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.flashcardapp.common.NavigationDirection
 import com.example.flashcardapp.domain.model.Deck
 import com.example.flashcardapp.presentation.DecksViewModel
+import com.example.flashcardapp.presentation.NavigationViewModel
 import com.example.flashcardapp.ui.navigation.DeckDestination
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
 @Composable
-fun DecksScreen(navController: NavController) {
+fun DecksScreen(navController: NavController, navigationViewModel: NavigationViewModel) {
     val decksViewModel: DecksViewModel = hiltViewModel()
     val decksState by decksViewModel.decksState.collectAsState()
     val uid = Firebase.auth.currentUser!!.uid
@@ -41,6 +43,7 @@ fun DecksScreen(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     DeckList(decks) {
+                        navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
                         navController.navigate(DeckDestination.route)
                     }
                 }

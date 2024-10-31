@@ -31,9 +31,11 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.flashcardapp.common.NavigationDirection
 import com.example.flashcardapp.common.rememberImeState
 import com.example.flashcardapp.domain.LoginState
 import com.example.flashcardapp.presentation.AuthViewModel
+import com.example.flashcardapp.presentation.NavigationViewModel
 import com.example.flashcardapp.ui.composable.Footer
 import com.example.flashcardapp.ui.composable.TopBar
 import com.example.flashcardapp.ui.composable.button.LoginButton
@@ -45,7 +47,7 @@ import com.example.flashcardapp.ui.navigation.RegisterDestination
 import com.example.flashcardapp.ui.theme.AppTheme
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController, navigationViewModel: NavigationViewModel) {
     val authViewModel: AuthViewModel = hiltViewModel()
     val imeState = rememberImeState()
     val scrollState = rememberScrollState()
@@ -99,7 +101,7 @@ fun LoginScreen(navController: NavController) {
         TopBar(icon = Icons.Filled.Close, iconDescription = "Close App") {
             activity.finish()
         }
-        BodyLogin(authViewModel, loginFailed, loginErrorMessage, loginState)
+        BodyLogin(authViewModel, navigationViewModel, loginFailed, loginErrorMessage, loginState)
         Footer(text1 = "Don't have an account?", text2 = "Sign Up") {
             navController.navigate(RegisterDestination.route)
         }
@@ -109,6 +111,7 @@ fun LoginScreen(navController: NavController) {
 @Composable
 fun BodyLogin(
     authViewModel: AuthViewModel,
+    navigationViewModel: NavigationViewModel,
     loginFailed: Boolean,
     loginErrorMessage: String,
     loginState: LoginState
@@ -141,6 +144,7 @@ fun BodyLogin(
             setPasswordError = { passwordError = it }
         ) {
             controller?.hide()
+            navigationViewModel.setNavigationDirection(NavigationDirection.LEFT_TO_RIGHT)
             authViewModel.login(email, password)
         }
     }
