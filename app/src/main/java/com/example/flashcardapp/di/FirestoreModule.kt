@@ -2,6 +2,7 @@ package com.example.flashcardapp.di
 
 import com.example.flashcardapp.data.repository.FirestoreRepositoryImpl
 import com.example.flashcardapp.data.source.remote.FirestoreService
+import com.example.flashcardapp.domain.mapper.CardMapper
 import com.example.flashcardapp.domain.mapper.DeckMapper
 import com.example.flashcardapp.domain.repository.FirestoreRepository
 import dagger.Module
@@ -24,7 +25,15 @@ object FirestoreModule {
 
     @Provides
     @Singleton
-    fun provideFirestoreRepository(firestoreService: FirestoreService, deckMapper: DeckMapper): FirestoreRepository =
-        FirestoreRepositoryImpl(firestoreService, deckMapper)
+    fun provideCardMapper(): CardMapper = CardMapper()
+
+    @Provides
+    @Singleton
+    fun provideFirestoreRepository(
+        firestoreService: FirestoreService,
+        deckMapper: DeckMapper,
+        cardMapper: CardMapper
+    ): FirestoreRepository =
+        FirestoreRepositoryImpl(firestoreService, deckMapper, cardMapper)
 
 }
