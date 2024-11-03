@@ -1,7 +1,9 @@
 package com.example.flashcardapp.data.repository
 
 import com.example.flashcardapp.data.source.remote.FirestoreService
+import com.example.flashcardapp.domain.mapper.CardMapper
 import com.example.flashcardapp.domain.mapper.DeckMapper
+import com.example.flashcardapp.domain.model.Card
 import com.example.flashcardapp.domain.model.Deck
 import com.example.flashcardapp.domain.repository.FirestoreRepository
 import kotlinx.coroutines.flow.Flow
@@ -10,7 +12,8 @@ import javax.inject.Inject
 
 class FirestoreRepositoryImpl @Inject constructor(
     private val firestoreService: FirestoreService,
-    private val deckMapper: DeckMapper
+    private val deckMapper: DeckMapper,
+    private val cardMapper: CardMapper
 ) :
     FirestoreRepository {
     override suspend fun getUserDecks(uid: String): Flow<Result<List<Deck>>> {
@@ -28,5 +31,13 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun deleteDeck(uid: String, deckId: String): Result<Unit> {
         return firestoreService.deleteDeck(uid, deckId)
+    }
+
+    override suspend fun getDeckCards(uid: String, deckId: String): Flow<Result<List<Card>>> {
+        return firestoreService.getDeckCards(uid, deckId).map { result ->
+            result.mapCatching { cardDtos ->
+                cardDtos.map { cardMapper.toDomain(it) }
+            }
+        }
     }
 }
