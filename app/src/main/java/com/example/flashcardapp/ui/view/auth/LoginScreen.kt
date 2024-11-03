@@ -60,7 +60,8 @@ fun LoginScreen(navController: NavController, navigationViewModel: NavigationVie
     val activity = LocalContext.current as Activity
 
     LaunchedEffect(true) {
-        //authViewModel.login("test@test.com", "test123")
+        navigationViewModel.setNavigationDirection(NavigationDirection.LEFT_TO_RIGHT)
+        authViewModel.login("test@test.com", "test123")
     }
 
     LaunchedEffect(key1 = imeState.value) {

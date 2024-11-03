@@ -19,3 +19,7 @@ object LoginDestination : Destinations {
 object RegisterDestination : Destinations {
     override val route: String = "register"
 }
+
+object EditDeckDestination : Destinations {
+    override val route: String = "editDeck"
+}
