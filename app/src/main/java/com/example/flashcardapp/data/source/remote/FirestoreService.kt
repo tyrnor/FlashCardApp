@@ -1,5 +1,6 @@
 package com.example.flashcardapp.data.source.remote
 
+import com.example.flashcardapp.data.model.CardDto
 import com.example.flashcardapp.data.model.DeckDto
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -15,24 +16,44 @@ class FirestoreService {
     private val firestore = Firebase.firestore
 
 
-    suspend fun getUserDecks(uid: String): Flow<Result<List<DeckDto>>> = callbackFlow {
-        val collectionRef = firestore.collection("Users").document(uid).collection("Decks")
-            .orderBy("timestamp", Query.Direction.DESCENDING)
+    suspend fun getUserDecks(uid: String): Flow<Result<List<DeckDto>>> =
+        callbackFlow {
+            val collectionRef = firestore.collection("Users").document(uid).collection("Decks")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
 
-        val listenerRegistration = collectionRef.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                trySend(Result.failure(Exception(error.message ?: "An error occurred")))
-                return@addSnapshotListener
+            val listenerRegistration = collectionRef.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(Result.failure(Exception(error.message ?: "An error occurred")))
+                    return@addSnapshotListener
+                }
+                val decks = snapshot?.documents?.map { document ->
+                    document.toObject(DeckDto::class.java)!!.copy(id = document.id)
+                } ?: emptyList()
+
+                trySend(Result.success(decks))
             }
-            val decks = snapshot?.documents?.map { document ->
-                document.toObject(DeckDto::class.java)!!.copy(id = document.id)
-            } ?: emptyList()
 
-            trySend(Result.success(decks))
+            awaitClose { listenerRegistration.remove() }
         }
 
-        awaitClose { listenerRegistration.remove() }
-    }
+    suspend fun getDeckCards(uid: String, deckId: String): Flow<Result<List<CardDto>>> =
+        callbackFlow {
+            val collectionRef = firestore.collection("Users").document(uid).collection("Decks")
+                .document(deckId).collection("Cards")
+
+            val listenerRegistration = collectionRef.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(Result.failure(Exception(error.message ?: "An error occurred")))
+                    return@addSnapshotListener
+                }
+                val cards = snapshot?.documents?.map { document ->
+                    document.toObject(CardDto::class.java)!!.copy(id = document.id)
+                } ?: emptyList()
+
+                trySend(Result.success(cards))
+            }
+            awaitClose { listenerRegistration.remove() }
+        }
 
     suspend fun addDeck(uid: String, deck: DeckDto): Result<Unit> {
         return try {
