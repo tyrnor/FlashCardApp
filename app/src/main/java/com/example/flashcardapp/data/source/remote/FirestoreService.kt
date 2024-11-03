@@ -7,15 +7,15 @@ import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 
 class FirestoreService {
 
     private val firestore = Firebase.firestore
 
     suspend fun getUserDecks(uid: String): Flow<Result<List<DeckDto>>> = callbackFlow {
-        val collectionRef =
-            firestore.collection("Users").document(uid).collection("Decks")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
+        val collectionRef = firestore.collection("Users").document(uid).collection("Decks")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
 
         val listenerRegistration = collectionRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
@@ -30,5 +30,38 @@ class FirestoreService {
         }
 
         awaitClose { listenerRegistration.remove() }
+    }
+
+    suspend fun addDeck(uid: String, deck: DeckDto): Result<Unit> {
+        return try {
+            val deckData = hashMapOf(
+                "name" to deck.name,
+                "timestamp" to deck.timestamp
+            )
+            firestore
+                .collection("Users")
+                .document(uid)
+                .collection("Decks")
+                .add(deckData)
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteDeck(uid: String, deckId: String): Result<Unit> {
+        return try {
+            firestore
+                .collection("Users")
+                .document(uid)
+                .collection("Decks")
+                .document(deckId)
+                .delete()
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
