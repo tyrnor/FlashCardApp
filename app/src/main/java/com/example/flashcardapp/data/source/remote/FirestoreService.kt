@@ -2,6 +2,7 @@ package com.example.flashcardapp.data.source.remote
 
 import com.example.flashcardapp.data.model.DeckDto
 import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.channels.awaitClose
@@ -12,8 +13,9 @@ import kotlinx.coroutines.tasks.await
 class FirestoreService {
 
     private val firestore = Firebase.firestore
+    private val uid = Firebase.auth.currentUser!!.uid
 
-    suspend fun getUserDecks(uid: String): Flow<Result<List<DeckDto>>> = callbackFlow {
+    suspend fun getUserDecks(): Flow<Result<List<DeckDto>>> = callbackFlow {
         val collectionRef = firestore.collection("Users").document(uid).collection("Decks")
             .orderBy("timestamp", Query.Direction.DESCENDING)
 
@@ -32,7 +34,7 @@ class FirestoreService {
         awaitClose { listenerRegistration.remove() }
     }
 
-    suspend fun addDeck(uid: String, deck: DeckDto): Result<Unit> {
+    suspend fun addDeck(deck: DeckDto): Result<Unit> {
         return try {
             val deckData = hashMapOf(
                 "name" to deck.name,
@@ -50,7 +52,7 @@ class FirestoreService {
         }
     }
 
-    suspend fun deleteDeck(uid: String, deckId: String): Result<Unit> {
+    suspend fun deleteDeck(deckId: String): Result<Unit> {
         return try {
             firestore
                 .collection("Users")

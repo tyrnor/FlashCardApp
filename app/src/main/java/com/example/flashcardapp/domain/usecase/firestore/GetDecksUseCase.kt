@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class GetDecksUseCase @Inject constructor(private val firestoreRepository: FirestoreRepository) {
-    suspend operator fun invoke(uid: String) : Flow<Result<List<Deck>>> {
-        return firestoreRepository.getUserDecks(uid)
+    suspend operator fun invoke() : Flow<Result<List<Deck>>> {
+        return firestoreRepository.getUserDecks()
     }
 }

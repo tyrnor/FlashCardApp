@@ -66,13 +66,12 @@ import java.util.Locale
 fun DecksScreen(navController: NavController, navigationViewModel: NavigationViewModel) {
     val decksViewModel: DecksViewModel = hiltViewModel()
     val decksState by decksViewModel.decksState.collectAsState()
-    val uid = Firebase.auth.currentUser!!.uid
 
     val openDialog = remember { mutableStateOf(false) }
     var deckName by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        decksViewModel.getUserDecks(uid)
+        decksViewModel.getUserDecks()
     }
 
     decksState?.let { result ->
@@ -97,7 +96,7 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                                 deckName = value
                             },
                             onConfirmation = {
-                                decksViewModel.addDeck(uid, Deck("", deckName, Timestamp.now()))
+                                decksViewModel.addDeck(Deck("", deckName, Timestamp.now()))
                                 openDialog.value = false
                                 deckName = ""
                             },
@@ -111,7 +110,7 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                             navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
                             navController.navigate(EditDeckDestination.route + "/$deckId")
                         },
-                        deleteDeck = { deckId -> decksViewModel.deleteDeck(uid, deckId) }
+                        deleteDeck = { deckId -> decksViewModel.deleteDeck(deckId) }
                     ) {
                         navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
                         navController.navigate(DeckDestination.route)
