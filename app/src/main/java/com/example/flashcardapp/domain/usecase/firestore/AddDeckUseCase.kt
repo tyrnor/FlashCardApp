@@ -5,7 +5,7 @@ import com.example.flashcardapp.domain.repository.FirestoreRepository
 import javax.inject.Inject
 
 class AddDeckUseCase @Inject constructor(private val firestoreRepository: FirestoreRepository) {
-    suspend operator fun invoke(deck: Deck): Result<Unit> {
-        return firestoreRepository.addDeck(deck)
+    suspend operator fun invoke(uid: String, deck: Deck): Result<Unit> {
+        return firestoreRepository.addDeck(uid, deck)
     }
 }

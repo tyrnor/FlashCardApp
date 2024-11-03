@@ -4,7 +4,7 @@ import com.example.flashcardapp.domain.repository.FirestoreRepository
 import javax.inject.Inject
 
 class DeleteDeckUseCase @Inject constructor(private val firestoreRepository: FirestoreRepository) {
-    suspend operator fun invoke(deckId: String): Result<Unit> {
-        return firestoreRepository.deleteDeck(deckId)
+    suspend operator fun invoke(uid: String, deckId: String): Result<Unit> {
+        return firestoreRepository.deleteDeck(uid, deckId)
     }
 }

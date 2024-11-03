@@ -13,20 +13,20 @@ class FirestoreRepositoryImpl @Inject constructor(
     private val deckMapper: DeckMapper
 ) :
     FirestoreRepository {
-    override suspend fun getUserDecks(): Flow<Result<List<Deck>>> {
-        return firestoreService.getUserDecks().map { result ->
+    override suspend fun getUserDecks(uid: String): Flow<Result<List<Deck>>> {
+        return firestoreService.getUserDecks(uid).map { result ->
             result.mapCatching { deckDtos ->
                 deckDtos.map { deckMapper.toDomain(it) }
             }
         }
     }
 
-    override suspend fun addDeck(deck: Deck): Result<Unit> {
+    override suspend fun addDeck(uid: String,deck: Deck): Result<Unit> {
         val deckDto = deckMapper.toDto(deck)
-        return firestoreService.addDeck(deckDto)
+        return firestoreService.addDeck(uid, deckDto)
     }
 
-    override suspend fun deleteDeck(deckId: String): Result<Unit> {
-        return firestoreService.deleteDeck(deckId)
+    override suspend fun deleteDeck(uid: String, deckId: String): Result<Unit> {
+        return firestoreService.deleteDeck(uid, deckId)
     }
 }

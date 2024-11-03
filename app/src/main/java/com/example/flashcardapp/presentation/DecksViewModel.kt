@@ -21,23 +21,23 @@ class DecksViewModel @Inject constructor(
     private val _decksState = MutableStateFlow<Result<List<Deck>>?>(null)
     val decksState: StateFlow<Result<List<Deck>>?> = _decksState
 
-    fun getUserDecks() {
+    fun getUserDecks(uid: String) {
         viewModelScope.launch {
-            getDecksUseCase().collect { result ->
+            getDecksUseCase(uid).collect { result ->
                 _decksState.value = result
             }
         }
     }
 
-    fun addDeck(deck: Deck) {
+    fun addDeck(uid: String, deck: Deck) {
         viewModelScope.launch {
-            addDeckUseCase(deck)
+            addDeckUseCase(uid, deck)
         }
     }
 
-    fun deleteDeck(deckId: String) {
+    fun deleteDeck(uid: String, deckId: String) {
         viewModelScope.launch {
-            deleteDeckUseCase(deckId)
+            deleteDeckUseCase(uid, deckId)
         }
     }
 }

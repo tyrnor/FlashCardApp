@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.flashcardapp.common.AuthUtils
 import com.example.flashcardapp.common.NavigationDirection
 import com.example.flashcardapp.domain.model.Deck
 import com.example.flashcardapp.presentation.DecksViewModel
@@ -57,8 +58,6 @@ import com.example.flashcardapp.ui.navigation.DeckDestination
 import com.example.flashcardapp.ui.navigation.EditDeckDestination
 import com.example.flashcardapp.ui.theme.AppTheme
 import com.google.firebase.Timestamp
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -67,67 +66,79 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
     val decksViewModel: DecksViewModel = hiltViewModel()
     val decksState by decksViewModel.decksState.collectAsState()
 
+    val uid = AuthUtils.currentId
+
     val openDialog = remember { mutableStateOf(false) }
     var deckName by rememberSaveable { mutableStateOf("") }
-
-    LaunchedEffect(Unit) {
-        decksViewModel.getUserDecks()
-    }
-
-    decksState?.let { result ->
-        result.fold(
-            onSuccess = { decks ->
-                Scaffold(
-                    floatingActionButton = {
-                        FloatingActionButton(
-                            onClick = {
-                                openDialog.value = true
+    if (uid != null) {
+        LaunchedEffect(Unit) {
+            decksViewModel.getUserDecks(uid)
+        }
+        decksState?.let { result ->
+            result.fold(
+                onSuccess = { decks ->
+                    Scaffold(
+                        floatingActionButton = {
+                            FloatingActionButton(
+                                onClick = {
+                                    openDialog.value = true
+                                }
+                            ) {
+                                Icon(Icons.Default.Add, "")
                             }
-                        ) {
-                            Icon(Icons.Default.Add, "")
-                        }
-                    },
-                    containerColor = AppTheme.colorScheme.background
-                ) {
-                    if (openDialog.value) {
-                        CreateDeckAlertDialog(
-                            deckName,
-                            onDeckNameChange = { value ->
-                                deckName = value
-                            },
-                            onConfirmation = {
-                                decksViewModel.addDeck(Deck("", deckName, Timestamp.now()))
-                                openDialog.value = false
-                                deckName = ""
-                            },
-                            onDismiss = { openDialog.value = false }
-                        )
-                    }
-                    DeckList(
-                        paddingValues = it,
-                        decks = decks,
-                        editDeck = { deckId ->
-                            navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
-                            navController.navigate(EditDeckDestination.route + "/$deckId")
                         },
-                        deleteDeck = { deckId -> decksViewModel.deleteDeck(deckId) }
+                        containerColor = AppTheme.colorScheme.background
                     ) {
-                        navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
-                        navController.navigate(DeckDestination.route)
+                        if (openDialog.value) {
+                            CreateDeckAlertDialog(
+                                deckName,
+                                onDeckNameChange = { value ->
+                                    deckName = value
+                                },
+                                onConfirmation = {
+                                    decksViewModel.addDeck(uid, Deck("", deckName, Timestamp.now()))
+                                    openDialog.value = false
+                                    deckName = ""
+                                },
+                                onDismiss = { openDialog.value = false }
+                            )
+                        }
+                        DeckList(
+                            paddingValues = it,
+                            decks = decks,
+                            editDeck = { deckId ->
+                                navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
+                                navController.navigate(EditDeckDestination.route + "/$deckId")
+                            },
+                            deleteDeck = { deckId -> decksViewModel.deleteDeck(uid, deckId) }
+                        ) {
+                            navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
+                            navController.navigate(DeckDestination.route)
+                        }
                     }
+                },
+                onFailure = { error ->
+                    Text(text = "Error: ${error.message}")
                 }
-            },
-            onFailure = { error ->
-                Text(text = "Error: ${error.message}")
-            }
-        )
-    } ?: Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        CircularProgressIndicator()
+            )
+        } ?: Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator()
+        }
+    } else {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Can't load user information")
+        }
     }
+
+
 }
 
 @Composable
