@@ -78,6 +78,7 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
             result.fold(
                 onSuccess = { decks ->
                     Scaffold(
+                        modifier = Modifier.fillMaxSize(),
                         floatingActionButton = {
                             FloatingActionButton(
                                 onClick = {
@@ -88,7 +89,7 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                             }
                         },
                         containerColor = AppTheme.colorScheme.background
-                    ) {
+                    ) { paddingValues ->
                         if (openDialog.value) {
                             CreateDeckAlertDialog(
                                 deckName,
@@ -96,7 +97,10 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                                     deckName = value
                                 },
                                 onConfirmation = {
-                                    decksViewModel.addDeck(uid, Deck("", deckName, Timestamp.now()))
+                                    decksViewModel.addDeck(
+                                        uid = uid,
+                                        deck = Deck("", deckName, Timestamp.now())
+                                    )
                                     openDialog.value = false
                                     deckName = ""
                                 },
@@ -104,7 +108,7 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                             )
                         }
                         DeckList(
-                            paddingValues = it,
+                            paddingValues = paddingValues,
                             decks = decks,
                             editDeck = { deckId ->
                                 navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
@@ -118,7 +122,13 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                     }
                 },
                 onFailure = { error ->
-                    Text(text = "Error: ${error.message}")
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = "Error: ${error.message}")
+                    }
                 }
             )
         } ?: Column(

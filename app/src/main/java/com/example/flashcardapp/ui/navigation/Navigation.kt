@@ -75,7 +75,13 @@ fun Navigation(windowSize: WindowSizeClass) {
         composable(
             route = EditDeckDestination.route + "/{deckId}",
             arguments = listOf(navArgument("deckId") { type = NavType.StringType }),
-        ) { EditDeckScreen(deckId = it.arguments?.getString("deckId")) }
+            enterTransition = {
+                slideInFadeInFromLeft()
+            },
+            exitTransition = {
+                slideOutFadeOutFromRight()
+            }
+        ) { EditDeckScreen(deckId = it.arguments?.getString("deckId"), navController) }
 
     }
 }
