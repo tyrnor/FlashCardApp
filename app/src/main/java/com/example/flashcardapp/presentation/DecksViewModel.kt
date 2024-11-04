@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flashcardapp.domain.model.Card
 import com.example.flashcardapp.domain.model.Deck
+import com.example.flashcardapp.domain.usecase.firestore.AddCardUseCase
 import com.example.flashcardapp.domain.usecase.firestore.AddDeckUseCase
 import com.example.flashcardapp.domain.usecase.firestore.DeleteDeckUseCase
 import com.example.flashcardapp.domain.usecase.firestore.GetDeckCardsUseCase
@@ -19,7 +20,8 @@ class DecksViewModel @Inject constructor(
     private val getDecksUseCase: GetDecksUseCase,
     private val addDeckUseCase: AddDeckUseCase,
     private val deleteDeckUseCase: DeleteDeckUseCase,
-    private val getDeckCardsUseCase: GetDeckCardsUseCase
+    private val getDeckCardsUseCase: GetDeckCardsUseCase,
+    private val addCardUseCase: AddCardUseCase
 ) : ViewModel() {
     private val _decksState = MutableStateFlow<Result<List<Deck>>?>(null)
     val decksState: StateFlow<Result<List<Deck>>?> = _decksState
@@ -52,6 +54,12 @@ class DecksViewModel @Inject constructor(
     fun deleteDeck(uid: String, deckId: String) {
         viewModelScope.launch {
             deleteDeckUseCase(uid, deckId)
+        }
+    }
+
+    fun addCard(uid: String, deckId: String, card: Card) {
+        viewModelScope.launch {
+            addCardUseCase(uid, deckId, card)
         }
     }
 }
