@@ -40,4 +40,9 @@ class FirestoreRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    override suspend fun addCard(uid: String, deckId: String, card: Card): Result<Unit> {
+        val cardDto = cardMapper.toDto(card)
+        return firestoreService.addCard(uid,deckId, cardDto)
+    }
 }
