@@ -68,7 +68,7 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
 
     val uid = AuthUtils.currentId
 
-    val openDialog = remember { mutableStateOf(false) }
+    var openDialog by remember { mutableStateOf(false) }
     var deckName by rememberSaveable { mutableStateOf("") }
     if (uid != null) {
         LaunchedEffect(Unit) {
@@ -82,7 +82,7 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                         floatingActionButton = {
                             FloatingActionButton(
                                 onClick = {
-                                    openDialog.value = true
+                                    openDialog = true
                                 }
                             ) {
                                 Icon(Icons.Default.Add, "")
@@ -90,7 +90,7 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                         },
                         containerColor = AppTheme.colorScheme.background
                     ) { paddingValues ->
-                        if (openDialog.value) {
+                        if (openDialog) {
                             CreateDeckAlertDialog(
                                 deckName,
                                 onDeckNameChange = { value ->
@@ -101,10 +101,10 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                                         uid = uid,
                                         deck = Deck("", deckName, Timestamp.now())
                                     )
-                                    openDialog.value = false
+                                    openDialog = false
                                     deckName = ""
                                 },
-                                onDismiss = { openDialog.value = false }
+                                onDismiss = { openDialog = false }
                             )
                         }
                         DeckList(
