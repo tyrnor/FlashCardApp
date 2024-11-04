@@ -3,6 +3,7 @@ package com.example.flashcardapp.data.source.remote
 import com.example.flashcardapp.data.model.CardDto
 import com.example.flashcardapp.data.model.DeckDto
 import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
@@ -39,7 +40,7 @@ class FirestoreService {
     suspend fun getDeckCards(uid: String, deckId: String): Flow<Result<List<CardDto>>> =
         callbackFlow {
             val collectionRef = firestore.collection("Users").document(uid).collection("Decks")
-                .document(deckId).collection("Cards")
+                .document(deckId).collection("Cards").orderBy("timestamp", Query.Direction.ASCENDING)
 
             val listenerRegistration = collectionRef.addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -59,7 +60,7 @@ class FirestoreService {
         return try {
             val deckData = hashMapOf(
                 "name" to deck.name,
-                "timestamp" to deck.timestamp
+                "timestamp" to Timestamp.now()
             )
             firestore
                 .collection("Users")
@@ -83,6 +84,27 @@ class FirestoreService {
                 .delete()
                 .await()
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun addCard(uid: String, deckId: String, card: CardDto): Result<Unit> {
+        return try {
+            val cardData = hashMapOf(
+                "question" to card.question,
+                "answer" to card.answer,
+                "timestamp" to Timestamp.now()
+            )
+            firestore
+                .collection("Users")
+                .document(uid)
+                .collection("Decks")
+                .document(deckId)
+                .collection("Cards")
+                .add(cardData)
+                .await()
+            return Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
