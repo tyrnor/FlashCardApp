@@ -109,4 +109,25 @@ class FirestoreService {
             Result.failure(e)
         }
     }
+
+    suspend fun editCard(uid: String, deckId: String, cardId: String, card: CardDto): Result<Unit> {
+        return try {
+            val cardData = hashMapOf(
+                "question" to card.question,
+                "answer" to card.answer,
+            )
+            firestore
+                .collection("Users")
+                .document(uid)
+                .collection("Decks")
+                .document(deckId)
+                .collection("Cards")
+                .document(cardId)
+                .set(cardData)
+                .await()
+            return Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
