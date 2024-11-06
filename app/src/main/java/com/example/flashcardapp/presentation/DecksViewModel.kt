@@ -7,6 +7,7 @@ import com.example.flashcardapp.domain.model.Deck
 import com.example.flashcardapp.domain.usecase.firestore.AddCardUseCase
 import com.example.flashcardapp.domain.usecase.firestore.AddDeckUseCase
 import com.example.flashcardapp.domain.usecase.firestore.DeleteDeckUseCase
+import com.example.flashcardapp.domain.usecase.firestore.EditCardUseCase
 import com.example.flashcardapp.domain.usecase.firestore.GetDeckCardsUseCase
 import com.example.flashcardapp.domain.usecase.firestore.GetDecksUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +22,8 @@ class DecksViewModel @Inject constructor(
     private val addDeckUseCase: AddDeckUseCase,
     private val deleteDeckUseCase: DeleteDeckUseCase,
     private val getDeckCardsUseCase: GetDeckCardsUseCase,
-    private val addCardUseCase: AddCardUseCase
+    private val addCardUseCase: AddCardUseCase,
+    private val editCardUseCase: EditCardUseCase
 ) : ViewModel() {
     private val _decksState = MutableStateFlow<Result<List<Deck>>?>(null)
     val decksState: StateFlow<Result<List<Deck>>?> = _decksState
@@ -60,6 +62,12 @@ class DecksViewModel @Inject constructor(
     fun addCard(uid: String, deckId: String, card: Card) {
         viewModelScope.launch {
             addCardUseCase(uid, deckId, card)
+        }
+    }
+
+    fun editCard(uid: String, deckId: String, cardId: String, card: Card) {
+        viewModelScope.launch {
+            editCardUseCase(uid, deckId, cardId, card)
         }
     }
 }
