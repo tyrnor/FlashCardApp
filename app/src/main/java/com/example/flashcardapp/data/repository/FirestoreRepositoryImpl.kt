@@ -45,4 +45,15 @@ class FirestoreRepositoryImpl @Inject constructor(
         val cardDto = cardMapper.toDto(card)
         return firestoreService.addCard(uid,deckId, cardDto)
     }
+
+    override suspend fun editCard(
+        uid: String,
+        deckId: String,
+        cardId: String,
+        card: Card
+    ): Result<Unit> {
+        val cardDto = cardMapper.toDto(card)
+        return firestoreService.editCard(uid, deckId, cardId, cardDto)
+
+    }
 }
