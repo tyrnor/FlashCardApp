@@ -1,7 +1,6 @@
 package com.example.flashcardapp.domain.usecase.firestore
 
 import com.example.flashcardapp.domain.model.Card
-import com.example.flashcardapp.domain.model.Deck
 import com.example.flashcardapp.domain.repository.FirestoreRepository
 import javax.inject.Inject
 
