@@ -1,7 +1,10 @@
 package com.example.flashcardapp.ui.view
 
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -17,6 +20,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -33,6 +37,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,7 +47,6 @@ import com.example.flashcardapp.common.AuthUtils
 import com.example.flashcardapp.domain.model.Card
 import com.example.flashcardapp.presentation.DecksViewModel
 import com.example.flashcardapp.ui.theme.AppTheme
-import com.google.firebase.Timestamp
 
 @Composable
 fun EditDeckScreen(deckId: String?, navController: NavController) {
@@ -50,9 +55,12 @@ fun EditDeckScreen(deckId: String?, navController: NavController) {
 
     val uid = AuthUtils.currentId
 
-    var openDialog by remember { mutableStateOf(false) }
+    var openCreateDialog by remember { mutableStateOf(false) }
+    var openEditDialog by remember { mutableStateOf(false) }
+
     var cardQuestion by rememberSaveable { mutableStateOf("") }
     var cardAnswer by rememberSaveable { mutableStateOf("") }
+    var selectedCardId by remember { mutableStateOf<String?>(null) }
     if (uid != null) {
         LaunchedEffect(Unit) {
             if (deckId != null) {
@@ -68,7 +76,7 @@ fun EditDeckScreen(deckId: String?, navController: NavController) {
                             FloatingActionButton(
                                 onClick = {
                                     if (deckId != null) {
-                                        openDialog = true
+                                        openCreateDialog = true
                                     }
                                 }
                             ) {
@@ -77,10 +85,12 @@ fun EditDeckScreen(deckId: String?, navController: NavController) {
                         },
                         containerColor = AppTheme.colorScheme.background
                     ) { paddingValues ->
-                        if (openDialog) {
-                            CreateCardAlertDialog(
+                        if (openCreateDialog) {
+                            CreateEditCardAlertDialog(
+                                dialogTitle = "Create New Card",
                                 cardQuestion = cardQuestion,
                                 cardAnswer = cardAnswer,
+                                buttonText = "Create",
                                 onCardQuestionChange = { value ->
                                     cardQuestion = value
                                 },
@@ -93,11 +103,45 @@ fun EditDeckScreen(deckId: String?, navController: NavController) {
                                         deckId = deckId!!,
                                         card = Card(question = cardQuestion, answer = cardAnswer)
                                     )
-                                    openDialog = false
+                                    openCreateDialog = false
                                     cardQuestion = ""
                                     cardAnswer = ""
                                 },
-                                onDismiss = { openDialog = false }
+                                onDismiss = {
+                                    openCreateDialog = false
+                                    cardQuestion = ""
+                                    cardAnswer = ""
+                                }
+                            )
+                        }
+                        if (openEditDialog) {
+                            CreateEditCardAlertDialog(
+                                dialogTitle = "Edit Card",
+                                cardQuestion = cardQuestion,
+                                cardAnswer = cardAnswer,
+                                buttonText = "Edit",
+                                onCardQuestionChange = { value ->
+                                    cardQuestion = value
+                                },
+                                onCardAnswerChange = { value ->
+                                    cardAnswer = value
+                                },
+                                onConfirmation = {
+                                    decksViewModel.editCard(
+                                        uid = uid,
+                                        deckId = deckId!!,
+                                        cardId = selectedCardId!!,
+                                        card = Card(question = cardQuestion, answer = cardAnswer)
+                                    )
+                                    openEditDialog = false
+                                    cardQuestion = ""
+                                    cardAnswer = ""
+                                },
+                                onDismiss = {
+                                    openEditDialog = false
+                                    cardQuestion = ""
+                                    cardAnswer = ""
+                                }
                             )
                         }
                         if (cards.isEmpty()) {
@@ -111,7 +155,13 @@ fun EditDeckScreen(deckId: String?, navController: NavController) {
                         } else {
                             CardList(
                                 paddingValues = paddingValues,
-                                cards = cards
+                                cards = cards,
+                                onCardClick = { card ->
+                                    selectedCardId = card.id
+                                    cardQuestion = card.question
+                                    cardAnswer = card.answer
+                                    openEditDialog = true
+                                }
                             )
                         }
                     }
@@ -149,20 +199,51 @@ fun EditDeckScreen(deckId: String?, navController: NavController) {
 @Composable
 fun CardList(
     paddingValues: PaddingValues,
-    cards: List<Card>
+    cards: List<Card>,
+    onCardClick: (Card) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
             .background(AppTheme.colorScheme.background),
-        verticalArrangement = Arrangement.spacedBy(5.dp)
+        verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
-        items(cards) { card ->
-            Column {
-                Text(card.question)
-                Text(card.answer)
+        items(cards, key = { it.id }) { card ->
+            Box(modifier = Modifier.animateItem()) {
+                CardItem(
+                    cardQuestion = card.question,
+                    cardAnswer = card.answer,
+                    onClick = { onCardClick(card) }
+                )
             }
+        }
+    }
+}
+
+@Composable
+fun CardItem(
+    cardQuestion: String,
+    cardAnswer: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable { onClick() }
+        ,
+        shape = RectangleShape,
+        colors = CardDefaults.cardColors().copy(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize(),
+        ) {
+            Text("Question")
+            Text(cardQuestion)
+            Text("Answer")
+            Text(cardAnswer)
         }
     }
 }
@@ -170,9 +251,11 @@ fun CardList(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateCardAlertDialog(
+fun CreateEditCardAlertDialog(
+    dialogTitle: String,
     cardQuestion: String,
     cardAnswer: String,
+    buttonText: String,
     onCardQuestionChange: (String) -> Unit,
     onCardAnswerChange: (String) -> Unit,
     onConfirmation: () -> Unit,
@@ -189,7 +272,7 @@ fun CreateCardAlertDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Create new Card",
+                    text = dialogTitle,
                     textAlign = TextAlign.Center,
                     style = AppTheme.typography.titleNormal
                 )
@@ -220,7 +303,7 @@ fun CreateCardAlertDialog(
                                 onConfirmation()
                             }
                         }) {
-                        Text("Create")
+                        Text(buttonText)
                     }
                 }
             }

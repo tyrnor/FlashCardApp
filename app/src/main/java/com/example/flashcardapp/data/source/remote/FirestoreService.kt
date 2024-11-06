@@ -20,7 +20,7 @@ class FirestoreService {
     suspend fun getUserDecks(uid: String): Flow<Result<List<DeckDto>>> =
         callbackFlow {
             val collectionRef = firestore.collection("Users").document(uid).collection("Decks")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .orderBy("timestamp")
 
             val listenerRegistration = collectionRef.addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -40,7 +40,7 @@ class FirestoreService {
     suspend fun getDeckCards(uid: String, deckId: String): Flow<Result<List<CardDto>>> =
         callbackFlow {
             val collectionRef = firestore.collection("Users").document(uid).collection("Decks")
-                .document(deckId).collection("Cards").orderBy("timestamp", Query.Direction.ASCENDING)
+                .document(deckId).collection("Cards").orderBy("timestamp")
 
             val listenerRegistration = collectionRef.addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -76,13 +76,20 @@ class FirestoreService {
 
     suspend fun deleteDeck(uid: String, deckId: String): Result<Unit> {
         return try {
-            firestore
+            val deckRef = firestore
                 .collection("Users")
                 .document(uid)
                 .collection("Decks")
                 .document(deckId)
-                .delete()
-                .await()
+
+            val cardsRef = deckRef.collection("Cards")
+            val cardsSnapshot = cardsRef.get().await()
+            for (card in cardsSnapshot.documents) {
+                card.reference.delete()
+            }
+
+            deckRef.delete().await()
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -112,7 +119,7 @@ class FirestoreService {
 
     suspend fun editCard(uid: String, deckId: String, cardId: String, card: CardDto): Result<Unit> {
         return try {
-            val cardData = hashMapOf(
+            val cardData = mapOf(
                 "question" to card.question,
                 "answer" to card.answer,
             )
@@ -123,7 +130,7 @@ class FirestoreService {
                 .document(deckId)
                 .collection("Cards")
                 .document(cardId)
-                .set(cardData)
+                .update(cardData)
                 .await()
             return Result.success(Unit)
         } catch (e: Exception) {

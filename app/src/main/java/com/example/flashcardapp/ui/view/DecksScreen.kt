@@ -3,6 +3,7 @@ package com.example.flashcardapp.ui.view
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,7 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
@@ -37,6 +40,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,6 +62,7 @@ import com.example.flashcardapp.ui.navigation.DeckDestination
 import com.example.flashcardapp.ui.navigation.EditDeckDestination
 import com.example.flashcardapp.ui.theme.AppTheme
 import com.google.firebase.Timestamp
+import kotlinx.coroutines.coroutineScope
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -70,6 +75,7 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
 
     var openDialog by remember { mutableStateOf(false) }
     var deckName by rememberSaveable { mutableStateOf("") }
+
     if (uid != null) {
         LaunchedEffect(Unit) {
             decksViewModel.getUserDecks(uid)
@@ -104,20 +110,33 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                                     openDialog = false
                                     deckName = ""
                                 },
-                                onDismiss = { openDialog = false }
+                                onDismiss = {
+                                    openDialog = false
+                                    deckName = ""
+                                }
                             )
                         }
-                        DeckList(
-                            paddingValues = paddingValues,
-                            decks = decks,
-                            editDeck = { deckId ->
+                        if (decks.isEmpty()){
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("No decks found")
+                            }
+                        } else {
+                            DeckList(
+                                paddingValues = paddingValues,
+                                decks = decks,
+                                editDeck = { deckId ->
+                                    navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
+                                    navController.navigate(EditDeckDestination.route + "/$deckId")
+                                },
+                                deleteDeck = { deckId -> decksViewModel.deleteDeck(uid, deckId) }
+                            ) {
                                 navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
-                                navController.navigate(EditDeckDestination.route + "/$deckId")
-                            },
-                            deleteDeck = { deckId -> decksViewModel.deleteDeck(uid, deckId) }
-                        ) {
-                            navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
-                            navController.navigate(DeckDestination.route)
+                                navController.navigate(DeckDestination.route)
+                            }
                         }
                     }
                 },
@@ -151,38 +170,49 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
 
 }
 
+
 @Composable
 fun DeckList(
     paddingValues: PaddingValues,
     decks: List<Deck>,
     editDeck: (String) -> Unit,
     deleteDeck: (String) -> Unit,
-    onDeckClick: (Deck) -> Unit
+    onDeckClick: (Deck) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
             .background(AppTheme.colorScheme.background),
-        verticalArrangement = Arrangement.spacedBy(5.dp)
+        verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
-        items(decks) { deck ->
-            DeckItem(
-                deck = deck,
-                editDeck = editDeck,
-                deleteDeck = deleteDeck,
-                onDeckClick = onDeckClick
-            )
+        items(decks, key = { it.id }) { deck ->
+            Box(modifier = Modifier.animateItem()) {
+                DeckItem(
+                    deck = deck,
+                    editDeck = {
+                        editDeck(deck.id)
+                    },
+                    deleteDeck = {
+                        deleteDeck(deck.id)
+                    },
+                    onDeckClick = {
+                        onDeckClick(deck)
+                    }
+                )
+            }
         }
+
     }
 }
+
 
 @Composable
 fun DeckItem(
     deck: Deck,
-    editDeck: (String) -> Unit,
-    deleteDeck: (String) -> Unit,
-    onDeckClick: (Deck) -> Unit
+    editDeck: () -> Unit,
+    deleteDeck: () -> Unit,
+    onDeckClick: () -> Unit
 ) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
@@ -201,7 +231,8 @@ fun DeckItem(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = AppTheme.size.medium),
+                .padding(top = AppTheme.size.medium)
+            ,
             verticalArrangement = Arrangement.Center
         ) {
             Row(
@@ -235,11 +266,11 @@ fun DeckItem(
                         expanded = expanded,
                         onDismissRequest = { expanded = false }) {
                         DropdownMenuItem(text = { Text("Edit") }, onClick = {
-                            editDeck(deck.id)
+                            editDeck()
                             expanded = false
                         })
                         DropdownMenuItem(text = { Text("Delete") }, onClick = {
-                            deleteDeck(deck.id)
+                            deleteDeck()
                             Toast.makeText(context, "Deck deleted", Toast.LENGTH_SHORT).show()
                             expanded = false
                         })
@@ -286,6 +317,7 @@ fun DeckItem(
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateDeckAlertDialog(
@@ -312,7 +344,8 @@ fun CreateDeckAlertDialog(
                 Spacer(modifier = Modifier.height(AppTheme.size.medium))
                 TextField(
                     value = deckName,
-                    onValueChange = { onDeckNameChange(it) }
+                    onValueChange = { onDeckNameChange(it) },
+                    placeholder = { Text("Deck Name") }
                 )
                 Spacer(modifier = Modifier.height(AppTheme.size.medium))
                 Row(

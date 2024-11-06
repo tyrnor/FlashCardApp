@@ -49,25 +49,46 @@ class DecksViewModel @Inject constructor(
 
     fun addDeck(uid: String, deck: Deck) {
         viewModelScope.launch {
-            addDeckUseCase(uid, deck)
+            val addResult = addDeckUseCase(uid, deck)
+            if (addResult.isSuccess) {
+                refreshDecks(uid)
+            }
+
         }
     }
 
     fun deleteDeck(uid: String, deckId: String) {
         viewModelScope.launch {
-            deleteDeckUseCase(uid, deckId)
+            val deleteResult = deleteDeckUseCase(uid, deckId)
+            if (deleteResult.isSuccess) {
+                refreshDecks(uid)
+            }
         }
     }
 
     fun addCard(uid: String, deckId: String, card: Card) {
         viewModelScope.launch {
-            addCardUseCase(uid, deckId, card)
+            val addResult = addCardUseCase(uid, deckId, card)
+            if (addResult.isSuccess) {
+                refreshCards(uid, deckId)
+            }
         }
     }
 
     fun editCard(uid: String, deckId: String, cardId: String, card: Card) {
         viewModelScope.launch {
             editCardUseCase(uid, deckId, cardId, card)
+        }
+    }
+
+    private suspend fun refreshDecks(uid: String) {
+        getDecksUseCase(uid).collect { result ->
+            _decksState.value = result
+        }
+    }
+    private suspend fun refreshCards(uid: String, deckId: String) {
+        getDeckCardsUseCase(uid, deckId).collect { result ->
+            _cardsState.value = result
         }
     }
 }
