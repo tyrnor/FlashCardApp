@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class NavigationViewModel : ViewModel() {
-
     private val _navigationDirection = MutableStateFlow<NavigationDirection?>(null)
     val navigationDirection: StateFlow<NavigationDirection?> = _navigationDirection
 

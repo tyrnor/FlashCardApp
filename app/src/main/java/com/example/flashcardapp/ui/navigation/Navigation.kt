@@ -65,13 +65,14 @@ fun Navigation(windowSize: WindowSizeClass) {
                 slideOutFadeOutFromLeft()
             }) { DecksScreen(navController, navigationViewModel) }
         composable(
-            DeckDestination.route,
+            DeckDestination.route + "/{deckId}",
+            arguments = listOf(navArgument("deckId") { type = NavType.StringType }),
             enterTransition = {
                 slideInFadeInFromLeft()
             },
             exitTransition = {
                 slideOutFadeOutFromRight()
-            }) { DeckScreen(navController, windowSize) }
+            }) { DeckScreen(deckId = it.arguments?.getString("deckId"), navController, windowSize) }
         composable(
             route = EditDeckDestination.route + "/{deckId}",
             arguments = listOf(navArgument("deckId") { type = NavType.StringType }),

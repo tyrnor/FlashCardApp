@@ -4,8 +4,6 @@ import com.example.flashcardapp.data.model.CardDto
 import com.example.flashcardapp.data.model.DeckDto
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
-import com.google.firebase.auth.auth
-import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow

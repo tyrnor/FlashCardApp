@@ -1,6 +1,5 @@
 package com.example.flashcardapp.ui.view
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -103,7 +102,6 @@ fun EditDeckScreen(deckId: String?, navController: NavController) {
                                         deckId = deckId!!,
                                         card = Card(question = cardQuestion, answer = cardAnswer)
                                     )
-                                    openCreateDialog = false
                                     cardQuestion = ""
                                     cardAnswer = ""
                                 },

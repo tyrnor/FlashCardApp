@@ -28,9 +28,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,10 +44,54 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.flashcardapp.common.AuthUtils
+import com.example.flashcardapp.domain.model.Card
+import com.example.flashcardapp.presentation.DecksViewModel
 
 @Composable
-fun DeckScreen(navController: NavController, windowSize: WindowSizeClass) {
+fun DeckScreen(deckId: String?, navController: NavController, windowSize: WindowSizeClass) {
+    val decksViewModel: DecksViewModel = hiltViewModel()
+    val cardsState by decksViewModel.cardsState.collectAsState()
+
+    val uid = AuthUtils.currentId
+
+    var cardList by rememberSaveable { mutableStateOf(emptyList<Card>()) }
+
+    if (uid != null) {
+        LaunchedEffect(Unit) {
+            if (deckId != null) {
+                decksViewModel.getDeckCards(uid, deckId)
+            }
+        }
+        cardsState?.let { result ->
+            result.fold(
+                onSuccess = { cards ->
+                    cardList = cards
+                    Text(cardList.size.toString())
+                },
+                onFailure = { error ->
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = "Error: ${error.message}")
+                    }
+                }
+            )
+        }
+    } else {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Can't load user information")
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,

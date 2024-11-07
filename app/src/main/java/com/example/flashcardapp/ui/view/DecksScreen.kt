@@ -13,9 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
@@ -40,7 +38,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,7 +59,6 @@ import com.example.flashcardapp.ui.navigation.DeckDestination
 import com.example.flashcardapp.ui.navigation.EditDeckDestination
 import com.example.flashcardapp.ui.theme.AppTheme
 import com.google.firebase.Timestamp
-import kotlinx.coroutines.coroutineScope
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -116,7 +112,7 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                                 }
                             )
                         }
-                        if (decks.isEmpty()){
+                        if (decks.isEmpty()) {
                             Column(
                                 modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.Center,
@@ -133,9 +129,9 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                                     navController.navigate(EditDeckDestination.route + "/$deckId")
                                 },
                                 deleteDeck = { deckId -> decksViewModel.deleteDeck(uid, deckId) }
-                            ) {
+                            ) { deckId ->
                                 navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
-                                navController.navigate(DeckDestination.route)
+                                navController.navigate(DeckDestination.route + "/$deckId")
                             }
                         }
                     }
@@ -177,7 +173,7 @@ fun DeckList(
     decks: List<Deck>,
     editDeck: (String) -> Unit,
     deleteDeck: (String) -> Unit,
-    onDeckClick: (Deck) -> Unit,
+    onDeckClick: (String) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier
@@ -197,7 +193,7 @@ fun DeckList(
                         deleteDeck(deck.id)
                     },
                     onDeckClick = {
-                        onDeckClick(deck)
+                        onDeckClick(deck.id)
                     }
                 )
             }
@@ -231,8 +227,7 @@ fun DeckItem(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = AppTheme.size.medium)
-            ,
+                .padding(top = AppTheme.size.medium),
             verticalArrangement = Arrangement.Center
         ) {
             Row(
@@ -298,7 +293,7 @@ fun DeckItem(
             }
             Spacer(modifier = Modifier.height(AppTheme.size.medium))
             Button(
-                onClick = {},
+                onClick = { onDeckClick() },
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .clip(AppTheme.shape.button),
