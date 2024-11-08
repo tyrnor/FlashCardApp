@@ -4,6 +4,7 @@ import com.example.flashcardapp.data.model.CardDto
 import com.example.flashcardapp.data.model.DeckDto
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +36,23 @@ class FirestoreService {
             awaitClose { listenerRegistration.remove() }
         }
 
+    suspend fun getCurrentDeck(uid: String, deckId: String): Flow<Result<DeckDto>> = callbackFlow {
+        val collectionRef = firestore.collection("Users").document(uid).collection("Decks")
+            .document(deckId)
+
+        val listenerRegistration = collectionRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                trySend(Result.failure(Exception(error.message ?: "An error occurred")))
+                return@addSnapshotListener
+            } else {
+                val deck = snapshot?.toObject(DeckDto::class.java)!!.copy(id = snapshot.id)
+                trySend(Result.success(deck))
+            }
+
+        }
+        awaitClose { listenerRegistration.remove() }
+    }
+
     suspend fun getDeckCards(uid: String, deckId: String): Flow<Result<List<CardDto>>> =
         callbackFlow {
             val collectionRef = firestore.collection("Users").document(uid).collection("Decks")
@@ -58,7 +76,9 @@ class FirestoreService {
         return try {
             val deckData = hashMapOf(
                 "name" to deck.name,
-                "timestamp" to Timestamp.now()
+                "timestamp" to Timestamp.now(),
+                "size" to deck.size,
+                "lastCard" to deck.lastCard
             )
             firestore
                 .collection("Users")
@@ -108,6 +128,13 @@ class FirestoreService {
                 .document(deckId)
                 .collection("Cards")
                 .add(cardData)
+                .await()
+            firestore
+                .collection("Users")
+                .document(uid)
+                .collection("Decks")
+                .document(deckId)
+                .update("size", FieldValue.increment(1))
                 .await()
             return Result.success(Unit)
         } catch (e: Exception) {
