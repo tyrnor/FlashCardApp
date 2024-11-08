@@ -9,7 +9,9 @@ class DeckMapper {
         return Deck(
             id = deckDto.id,
             name = deckDto.name,
-            timestamp = deckDto.timestamp
+            timestamp = deckDto.timestamp,
+            size = deckDto.size,
+            lastCard = deckDto.lastCard
         )
     }
 
@@ -17,7 +19,9 @@ class DeckMapper {
         return DeckDto(
             id = deck.id,
             name = deck.name,
-            timestamp = deck.timestamp
+            timestamp = deck.timestamp,
+            size = deck.size,
+            lastCard = deck.lastCard
         )
     }
 }
