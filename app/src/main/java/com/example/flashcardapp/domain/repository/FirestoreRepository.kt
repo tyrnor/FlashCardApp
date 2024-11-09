@@ -12,5 +12,5 @@ interface FirestoreRepository {
     suspend fun getDeckCards(uid: String, deckId: String) : Flow<Result<List<Card>>>
     suspend fun addCard(uid: String, deckId: String, card: Card) : Result<Unit>
     suspend fun editCard(uid: String, deckId: String, cardId: String, card: Card) : Result<Unit>
-
+    suspend fun getCurrentDeck(uid: String, deckId: String) : Flow<Result<Deck>>
 }
