@@ -8,8 +8,10 @@ import com.example.flashcardapp.domain.usecase.firestore.AddCardUseCase
 import com.example.flashcardapp.domain.usecase.firestore.AddDeckUseCase
 import com.example.flashcardapp.domain.usecase.firestore.DeleteDeckUseCase
 import com.example.flashcardapp.domain.usecase.firestore.EditCardUseCase
+import com.example.flashcardapp.domain.usecase.firestore.GetCurrentDeckUseCase
 import com.example.flashcardapp.domain.usecase.firestore.GetDeckCardsUseCase
 import com.example.flashcardapp.domain.usecase.firestore.GetDecksUseCase
+import com.example.flashcardapp.domain.usecase.firestore.UpdateLastCardUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,13 +25,18 @@ class DecksViewModel @Inject constructor(
     private val deleteDeckUseCase: DeleteDeckUseCase,
     private val getDeckCardsUseCase: GetDeckCardsUseCase,
     private val addCardUseCase: AddCardUseCase,
-    private val editCardUseCase: EditCardUseCase
+    private val editCardUseCase: EditCardUseCase,
+    private val getCurrentDeckUseCase: GetCurrentDeckUseCase,
+    private val updateLastCardUseCase: UpdateLastCardUseCase
 ) : ViewModel() {
     private val _decksState = MutableStateFlow<Result<List<Deck>>?>(null)
     val decksState: StateFlow<Result<List<Deck>>?> = _decksState
 
     private val _cardsState = MutableStateFlow<Result<List<Card>>?>(null)
     val cardsState: StateFlow<Result<List<Card>>?> = _cardsState
+
+    private val _currentDeck = MutableStateFlow<Result<Deck>?>(null)
+    val currentDeck: StateFlow<Result<Deck>?> = _currentDeck
 
     fun getUserDecks(uid: String) {
         viewModelScope.launch {
@@ -43,6 +50,14 @@ class DecksViewModel @Inject constructor(
         viewModelScope.launch {
             getDeckCardsUseCase(uid, deckId).collect { result ->
                 _cardsState.value = result
+            }
+        }
+    }
+
+    fun getCurrentDeck(uid: String, deckId: String) {
+        viewModelScope.launch {
+            getCurrentDeckUseCase(uid, deckId).collect { result ->
+                _currentDeck.value = result
             }
         }
     }
@@ -81,14 +96,22 @@ class DecksViewModel @Inject constructor(
         }
     }
 
+    fun updateLastCard(uid: String, deckId: String, currentPage: Int) {
+        viewModelScope.launch {
+            updateLastCardUseCase(uid, deckId, currentPage)
+        }
+    }
+
     private suspend fun refreshDecks(uid: String) {
         getDecksUseCase(uid).collect { result ->
             _decksState.value = result
         }
     }
+
     private suspend fun refreshCards(uid: String, deckId: String) {
         getDeckCardsUseCase(uid, deckId).collect { result ->
             _cardsState.value = result
         }
     }
+
 }
