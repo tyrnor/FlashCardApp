@@ -162,4 +162,22 @@ class FirestoreService {
             Result.failure(e)
         }
     }
+
+    suspend fun updateLastCard(uid: String, deckId: String, lastCard: Int): Result<Unit> {
+        return try {
+            val deckData = mapOf(
+                "lastCard" to lastCard
+            )
+            firestore
+                .collection("Users")
+                .document(uid)
+                .collection("Decks")
+                .document(deckId)
+                .update(deckData)
+                .await()
+            return Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
