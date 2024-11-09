@@ -1,5 +1,6 @@
 package com.example.flashcardapp.ui.view
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,6 +46,9 @@ import androidx.navigation.NavController
 import com.example.flashcardapp.common.AuthUtils
 import com.example.flashcardapp.domain.model.Card
 import com.example.flashcardapp.presentation.DecksViewModel
+import com.example.flashcardapp.ui.composable.CantLoadUserInformation
+import com.example.flashcardapp.ui.composable.OnFailure
+import com.example.flashcardapp.ui.composable.ProgressIndicator
 import com.example.flashcardapp.ui.theme.AppTheme
 
 @Composable
@@ -67,6 +71,7 @@ fun EditDeckScreen(deckId: String?, navController: NavController) {
             }
         }
         cardsState?.let { result ->
+            Log.d("CardState", "EditDeckScreen: $cardsState")
             result.fold(
                 onSuccess = { cards ->
                     Scaffold(
@@ -163,34 +168,14 @@ fun EditDeckScreen(deckId: String?, navController: NavController) {
                             )
                         }
                     }
-
                 },
                 onFailure = { error ->
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(text = "Error: ${error.message}")
-                    }
+                    OnFailure(error)
                 }
             )
-        }
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-        }
+        } ?: ProgressIndicator()
     } else {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Can't load user information")
-        }
+        CantLoadUserInformation()
     }
 }
 
@@ -228,8 +213,7 @@ fun CardItem(
     Card(
         modifier = Modifier
             .fillMaxSize()
-            .clickable { onClick() }
-        ,
+            .clickable { onClick() },
         shape = RectangleShape,
         colors = CardDefaults.cardColors().copy(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)

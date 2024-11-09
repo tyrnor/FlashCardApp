@@ -22,7 +22,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,10 +54,12 @@ import com.example.flashcardapp.common.NavigationDirection
 import com.example.flashcardapp.domain.model.Deck
 import com.example.flashcardapp.presentation.DecksViewModel
 import com.example.flashcardapp.presentation.NavigationViewModel
+import com.example.flashcardapp.ui.composable.CantLoadUserInformation
+import com.example.flashcardapp.ui.composable.OnFailure
+import com.example.flashcardapp.ui.composable.ProgressIndicator
 import com.example.flashcardapp.ui.navigation.DeckDestination
 import com.example.flashcardapp.ui.navigation.EditDeckDestination
 import com.example.flashcardapp.ui.theme.AppTheme
-import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -67,10 +68,13 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
     val decksViewModel: DecksViewModel = hiltViewModel()
     val decksState by decksViewModel.decksState.collectAsState()
 
+    val context = LocalContext.current
+
     val uid = AuthUtils.currentId
 
     var openDialog by remember { mutableStateOf(false) }
     var deckName by rememberSaveable { mutableStateOf("") }
+
 
     if (uid != null) {
         LaunchedEffect(Unit) {
@@ -101,7 +105,7 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                                 onConfirmation = {
                                     decksViewModel.addDeck(
                                         uid = uid,
-                                        deck = Deck("", deckName, Timestamp.now())
+                                        deck = Deck(name = deckName)
                                     )
                                     openDialog = false
                                     deckName = ""
@@ -129,38 +133,25 @@ fun DecksScreen(navController: NavController, navigationViewModel: NavigationVie
                                     navController.navigate(EditDeckDestination.route + "/$deckId")
                                 },
                                 deleteDeck = { deckId -> decksViewModel.deleteDeck(uid, deckId) }
-                            ) { deckId ->
-                                navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
-                                navController.navigate(DeckDestination.route + "/$deckId")
+                            ) { deck ->
+                                if (deck.size == 0) {
+                                    Toast.makeText(context, "Deck is empty", Toast.LENGTH_SHORT)
+                                        .show()
+                                } else {
+                                    navigationViewModel.setNavigationDirection(NavigationDirection.RIGHT_TO_LEFT)
+                                    navController.navigate(DeckDestination.route + "/${deck.id}")
+                                }
                             }
                         }
                     }
                 },
                 onFailure = { error ->
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(text = "Error: ${error.message}")
-                    }
+                    OnFailure(error)
                 }
             )
-        } ?: Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator()
-        }
+        } ?: ProgressIndicator()
     } else {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Can't load user information")
-        }
+        CantLoadUserInformation()
     }
 
 
@@ -173,7 +164,7 @@ fun DeckList(
     decks: List<Deck>,
     editDeck: (String) -> Unit,
     deleteDeck: (String) -> Unit,
-    onDeckClick: (String) -> Unit,
+    onDeckClick: (Deck) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier
@@ -193,7 +184,7 @@ fun DeckList(
                         deleteDeck(deck.id)
                     },
                     onDeckClick = {
-                        onDeckClick(deck.id)
+                        onDeckClick(deck)
                     }
                 )
             }
@@ -287,7 +278,7 @@ fun DeckItem(
                     color = Color.Black
                 )
                 Text(
-                    text = "0",
+                    text = deck.size.toString(),
                     color = Color.Black
                 )
             }

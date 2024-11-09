@@ -4,8 +4,10 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +17,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -33,7 +39,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,60 +54,96 @@ import androidx.navigation.NavController
 import com.example.flashcardapp.common.AuthUtils
 import com.example.flashcardapp.domain.model.Card
 import com.example.flashcardapp.presentation.DecksViewModel
+import com.example.flashcardapp.ui.composable.CantLoadUserInformation
+import com.example.flashcardapp.ui.composable.OnFailure
+import com.example.flashcardapp.ui.composable.ProgressIndicator
+import com.example.flashcardapp.ui.theme.AppTheme
 
 @Composable
 fun DeckScreen(deckId: String?, navController: NavController, windowSize: WindowSizeClass) {
     val decksViewModel: DecksViewModel = hiltViewModel()
     val cardsState by decksViewModel.cardsState.collectAsState()
+    val currentDeckState by decksViewModel.currentDeck.collectAsState()
 
     val uid = AuthUtils.currentId
-
-    var cardList by rememberSaveable { mutableStateOf(emptyList<Card>()) }
 
     if (uid != null) {
         LaunchedEffect(Unit) {
             if (deckId != null) {
                 decksViewModel.getDeckCards(uid, deckId)
+                decksViewModel.getCurrentDeck(uid, deckId)
             }
         }
-        cardsState?.let { result ->
+        currentDeckState?.let { result ->
             result.fold(
-                onSuccess = { cards ->
-                    cardList = cards
-                    Text(cardList.size.toString())
+                onSuccess = { deck ->
+                    cardsState?.let { result ->
+                        result.fold(
+                            onSuccess = { cards ->
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    val pagerState =
+                                        rememberPagerState(initialPage = deck.lastCard) { cards.size }
+                                    LaunchedEffect(pagerState.currentPage) {
+                                        decksViewModel.updateLastCard(
+                                            uid,
+                                            deckId!!,
+                                            pagerState.currentPage
+                                        )
+                                    }
+                                    Column(
+                                        modifier = Modifier.fillMaxSize(),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(deck.lastCard.toString())
+                                        Text(deck.id)
+                                        HorizontalPager(state = pagerState) { page ->
+                                            val card = cards[page]
+                                            DeckCard(card, windowSize)
+                                        }
+                                        Spacer(modifier = Modifier.height(50.dp))
+                                        Row(
+                                            Modifier
+                                                .wrapContentHeight()
+                                                .fillMaxWidth()
+                                                .padding(bottom = 8.dp),
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            repeat(pagerState.pageCount) { iteration ->
+                                                val color =
+                                                    if (pagerState.currentPage == iteration) Color.DarkGray else Color.LightGray
+                                                Box(
+                                                    modifier = Modifier
+                                                        .padding(2.dp)
+                                                        .clip(CircleShape)
+                                                        .background(color)
+                                                        .size(8.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                }
+
+                            },
+                            onFailure = { error ->
+                                OnFailure(error)
+                            }
+                        )
+                    }
                 },
                 onFailure = { error ->
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(text = "Error: ${error.message}")
-                    }
+                    OnFailure(error)
                 }
             )
-        }
+        } ?: ProgressIndicator()
     } else {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Can't load user information")
-        }
-    }
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        DeckCard(windowSize)
+        CantLoadUserInformation()
     }
 }
 
 @Composable
-fun DeckCard(windowSize: WindowSizeClass) {
+fun DeckCard(card: Card, windowSize: WindowSizeClass) {
 
     var rotated by remember { mutableStateOf(false) }
 
@@ -135,6 +176,7 @@ fun DeckCard(windowSize: WindowSizeClass) {
     val modifierMobile = Modifier
         .height(300.dp)
         .fillMaxWidth()
+        .padding(horizontal = AppTheme.size.medium)
         .graphicsLayer {
             rotationY = rotation
             cameraDistance = 8 * density
@@ -177,6 +219,13 @@ fun DeckCard(windowSize: WindowSizeClass) {
                     fontWeight = FontWeight.Normal,
                     fontSize = 25.sp
                 )
+                Text(
+                    text = card.question,
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = animateFront
+                        },
+                )
             }
         } else {
             Column(
@@ -193,6 +242,14 @@ fun DeckCard(windowSize: WindowSizeClass) {
                         },
                     fontSize = 25.sp,
                     textAlign = TextAlign.Center
+                )
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            alpha = animateBack
+                            rotationY = rotation
+                        }, text = card.answer
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Row(
