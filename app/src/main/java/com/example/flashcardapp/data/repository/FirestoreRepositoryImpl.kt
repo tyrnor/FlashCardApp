@@ -62,4 +62,8 @@ class FirestoreRepositoryImpl @Inject constructor(
             result.mapCatching { deckMapper.toDomain(it) }
         }
     }
+
+    override suspend fun updateLastCard(uid: String, deckId: String, lastCard: Int): Result<Unit> {
+        return firestoreService.updateLastCard(uid, deckId, lastCard)
+    }
 }
