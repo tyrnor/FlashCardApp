@@ -7,5 +7,6 @@ data class Deck(
     val name: String,
     val timestamp: Timestamp = Timestamp.now(),
     val size: Int = 0,
-    val lastCard : Int = 0
+    val lastCard : Int = 0,
+    val currentSession : String = ""
 )

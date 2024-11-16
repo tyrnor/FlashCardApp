@@ -8,4 +8,5 @@ data class DeckDto(
     val timestamp: Timestamp = Timestamp.now(),
     val size : Int = 0,
     val lastCard : Int = 0,
+    val currentSession : String = ""
 )

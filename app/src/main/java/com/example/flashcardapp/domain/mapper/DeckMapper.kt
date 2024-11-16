@@ -11,7 +11,8 @@ class DeckMapper {
             name = deckDto.name,
             timestamp = deckDto.timestamp,
             size = deckDto.size,
-            lastCard = deckDto.lastCard
+            lastCard = deckDto.lastCard,
+            currentSession = deckDto.currentSession
         )
     }
 
@@ -21,7 +22,8 @@ class DeckMapper {
             name = deck.name,
             timestamp = deck.timestamp,
             size = deck.size,
-            lastCard = deck.lastCard
+            lastCard = deck.lastCard,
+            currentSession = deck.currentSession
         )
     }
 }
